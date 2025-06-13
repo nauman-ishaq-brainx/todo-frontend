@@ -1,7 +1,5 @@
 import React from "react";
 import { BrowserRouter as Router } from "react-router-dom";
-import AppRoutes from "./routes"; // centralized routes file
-// import AuthRoutes from "./routes/auth";
 import { authRoutes, todoRoutes } from "./route";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";

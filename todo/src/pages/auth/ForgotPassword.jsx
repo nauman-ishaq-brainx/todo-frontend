@@ -1,25 +1,20 @@
-import React, { useState } from "react";
-import 'bootstrap/dist/css/bootstrap.min.css';
+import React from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { useForm } from "react-hook-form";
 import { forgotPassword } from "../../services/authServices";
 import { ToastContainer, toast } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
+import { useNavigate } from "react-router-dom";
 
 const ForgotPassword = () => {
-  const [resetLink, setResetLink] = useState("");
-  const {
-    register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
-  } = useForm();
+  const { register, handleSubmit, formState: {isSubmitting } } = useForm();
+  const navigate = useNavigate();
 
   const onSubmit = async ({ email }) => {
-    setResetLink(""); // clear previous link
     try {
-      const res = await forgotPassword(email);
-      const url = res.resetLink;
-      setResetLink(url);
-      toast.success("Reset link generated successfully!");
+      await forgotPassword(email);
+      toast.success("A reset link has been sent.");
+      setTimeout(() => navigate("/auth/login"), 2000);
     } catch (error) {
       const errMsg = error.response?.data?.error || "Something went wrong.";
       toast.error(errMsg);
@@ -32,28 +27,15 @@ const ForgotPassword = () => {
       <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
         <h2 className="text-center mb-4">Forgot Password</h2>
 
-        {resetLink && (
-          <div className="alert alert-success">
-            Password reset link:
-            <br />
-            <a href={resetLink} target="_blank" rel="noopener noreferrer">
-              {resetLink}
-            </a>
-          </div>
-        )}
-
         <form onSubmit={handleSubmit(onSubmit)}>
           <div className="mb-3">
             <label className="form-label">Email address</label>
             <input
               type="email"
               {...register("email", { required: "Email is required" })}
-              className={`form-control ${errors.email ? "is-invalid" : ""}`}
+              className="form-control"
               placeholder="Enter your email"
             />
-            {errors.email && (
-              <div className="invalid-feedback">{errors.email.message}</div>
-            )}
           </div>
 
           <button
@@ -63,11 +45,7 @@ const ForgotPassword = () => {
           >
             {isSubmitting ? (
               <>
-                <span
-                  className="spinner-border spinner-border-sm me-2"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 Sending...
               </>
             ) : (

@@ -40,7 +40,7 @@ export default function UpdatePassword() {
 
       toast.success("Password updated successfully. Redirecting to homepage");
       reset();
-      setTimeout(() => navigate("/"), 2000);
+      setTimeout(() => navigate("/"), 1000);
     } catch (error) {
       toast.error(error.response?.data?.error || "Failed to update password");
     } finally {

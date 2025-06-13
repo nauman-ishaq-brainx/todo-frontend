@@ -6,12 +6,8 @@ import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 export default function VerifyEmail() {
-    console.log(
-        'hello'
-    )
   const navigate = useNavigate();
   const { token } = useParams();
-  console.log(token)
 
   useEffect(() => {
     const verify = async () => {
