@@ -20,7 +20,7 @@ const ResetPassword = () => {
         try {
             const res = await resetPassword({ token, newPassword: password });
             toast.success(res.message || "Password reset successful!");
-            setTimeout(() => navigate("/auth/login"), 3000);
+            setTimeout(() => navigate("/auth/login"), 1500);
         } catch (err) {
             const errMsg = err.response?.data?.error || "Reset failed. Try again.";
             toast.error(errMsg);

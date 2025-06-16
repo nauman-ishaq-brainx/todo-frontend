@@ -1,10 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import {
     getAllTasks,
     addTask,
     markTaskComplete,
-    deleteTask,
     markTaskNotComplete,
     updateTaskName
 } from "../../services/taskServices";
@@ -12,16 +10,19 @@ import { toast } from "react-toastify";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "react-toastify/dist/ReactToastify.css";
+import { Navbar } from "./Navbar";
+import { DeleteModal } from "./DeleteModal";
+
+
 
 const Home = () => {
-    const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem("user"));
+    const [taskToDeleteId, setTaskToDeleteId] = useState(null);
     const [tasks, setTasks] = useState([]);
     const [newTask, setNewTask] = useState("");
     const [loading, setLoading] = useState(true);
     const [editingTaskId, setEditingTaskId] = useState(null);
     const [editedTaskName, setEditedTaskName] = useState("");
-    const [taskToDeleteId, setTaskToDeleteId] = useState(null);
 
 
     const fetchTasks = async () => {
@@ -40,15 +41,7 @@ const Home = () => {
         fetchTasks();
     }, []);
 
-    const handleLogout = () => {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        navigate("/auth/login");
-    };
-
-    const handleUpdatePassword = () => {
-        navigate("/auth/update-password");
-    };
+    
 
     const handleAddTask = async () => {
         if (!newTask.trim()) return;
@@ -82,15 +75,7 @@ const Home = () => {
         }
     };
 
-    const handleDeleteTask = async (id) => {
-        try {
-            await deleteTask(id);
-            await fetchTasks();
-            toast.success("Task deleted");
-        } catch {
-            toast.error("Failed to delete task");
-        }
-    };
+    
 
     const handleUpdateTaskName = async (id) => {
         try {
@@ -111,32 +96,7 @@ const Home = () => {
     return (
         <div>
             {/* Navbar */}
-            <nav className="navbar navbar-expand-lg navbar-dark bg-primary">
-                <div className="container-fluid">
-                    <span className="navbar-brand">Todo Dashboard</span>
-                    <div className="d-flex align-items-center ms-auto">
-                        <div className="dropdown me-3">
-                            <button
-                                className="btn btn-light btn-sm dropdown-toggle"
-                                type="button"
-                                data-bs-toggle="dropdown"
-                            >
-                                Settings
-                            </button>
-                            <ul className="dropdown-menu dropdown-menu-end">
-                                <li>
-                                    <button className="dropdown-item" onClick={handleUpdatePassword}>
-                                        Update Password
-                                    </button>
-                                </li>
-                            </ul>
-                        </div>
-                        <button className="btn btn-outline-light btn-sm" onClick={handleLogout}>
-                            Logout
-                        </button>
-                    </div>
-                </div>
-            </nav>
+            <Navbar   />
 
             <div className="container mt-5 w-50">
                 <h2 className="mb-4">Welcome, {user?.name || "User"}!</h2>
@@ -249,39 +209,7 @@ const Home = () => {
 
             {/* DeleteModal*/}
 
-            <div
-  className="modal fade"
-  id="confirmDeleteModal"
-  tabIndex="-1"
-  aria-hidden="true"
->
-  <div className="modal-dialog">
-    <div className="modal-content">
-      <div className="modal-body text-center">
-        <p>Are you sure you want to delete this task?</p>
-        <div className="d-flex justify-content-center gap-3">
-          <button
-            className="btn btn-secondary"
-            data-bs-dismiss="modal"
-          >
-            Cancel
-          </button>
-          <button
-            className="btn btn-danger"
-            data-bs-dismiss="modal"
-            onClick={async () => {
-              await handleDeleteTask(taskToDeleteId);
-              setTaskToDeleteId(null);
-            }}
-          >
-            Delete
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
+                <DeleteModal fetchTasks={fetchTasks} taskToDeleteId={taskToDeleteId} setTaskToDeleteId={setTaskToDeleteId} />
         </div>
 
     );
