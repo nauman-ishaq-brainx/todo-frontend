@@ -7,7 +7,6 @@ export const getAllTasks = async () => {
 
 export const addTask = async (name) => {
   const res = await authorizedAxios.post("/tasks", name);
-  console.log(res);
   return res.data;
 };
 

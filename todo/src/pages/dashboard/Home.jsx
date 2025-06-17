@@ -4,16 +4,21 @@ import {
     addTask,
     markTaskComplete,
     markTaskNotComplete,
-    updateTaskName
+    updateTaskName,
 } from "../../services/taskServices";
-import { toast } from "react-toastify";
+import {
+    getAcceptedSharedTasks,
+    deleteSharedTaskAsReceiver,
+} from "../../services/sharedTaskService";
+import { toast, ToastContainer } from "react-toastify";
+import { Navbar } from "./Navbar";
+import { DeleteModal } from "./DeleteModal";
+import { SharedTaskModal } from "./ShareTask";
+import { TaskItem } from "./TaskItem";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "react-toastify/dist/ReactToastify.css";
-import { Navbar } from "./Navbar";
-import { DeleteModal } from "./DeleteModal";
-
-
+import socket from "../../utils/socket";
 
 const Home = () => {
     const user = JSON.parse(localStorage.getItem("user"));
@@ -21,15 +26,19 @@ const Home = () => {
     const [tasks, setTasks] = useState([]);
     const [newTask, setNewTask] = useState("");
     const [loading, setLoading] = useState(true);
-    const [editingTaskId, setEditingTaskId] = useState(null);
-    const [editedTaskName, setEditedTaskName] = useState("");
+    const [taskToShareId, setTaskToShareId] = useState(null);
+    const [sharedTasks, setSharedTasks] = useState([]);
 
-
+    // Fetch all tasks (owned + shared)
     const fetchTasks = async () => {
         setLoading(true);
         try {
-            const res = await getAllTasks();
-            setTasks(res.tasks || []);
+            const [taskRes, sharedTaskRes] = await Promise.all([
+                getAllTasks(),
+                getAcceptedSharedTasks(),
+            ]);
+            setTasks(taskRes.tasks || []);
+            setSharedTasks(sharedTaskRes || []);
         } catch {
             toast.error("Failed to fetch tasks");
         } finally {
@@ -37,11 +46,25 @@ const Home = () => {
         }
     };
 
+    const fetchSharedTasks = async () => {
+        try {
+            const sharedTaskRes = await getAcceptedSharedTasks();
+            setSharedTasks(sharedTaskRes || []);
+        } catch {
+            toast.error("Failed to fetch shared tasks");
+        }
+    };
+
     useEffect(() => {
         fetchTasks();
+
+        socket.on("task_updated", fetchTasks);
+
+        return () => {
+            socket.off("task_updated", fetchTasks);
+        };
     }, []);
 
-    
 
     const handleAddTask = async () => {
         if (!newTask.trim()) return;
@@ -58,34 +81,33 @@ const Home = () => {
     const handleMarkComplete = async (id) => {
         try {
             await markTaskComplete(id);
+            socket.emit("task_updated");
             await fetchTasks();
-            toast.success("Task completed");
+            toast.success("Task marked as completed");
         } catch {
-            toast.error("Failed to mark task as completed");
+            toast.error("Failed to mark as completed");
         }
     };
 
     const handleMarkNotComplete = async (id) => {
         try {
             await markTaskNotComplete(id);
+            socket.emit("task_updated");
             await fetchTasks();
             toast.success("Task marked as not completed");
         } catch {
-            toast.error("Failed to mark task as not completed");
+            toast.error("Failed to mark as not completed");
         }
     };
 
-    
-
-    const handleUpdateTaskName = async (id) => {
+    const handleUpdateTaskName = async (id, newName) => {
+        if (!newName.trim()) {
+            toast.error("Task name cannot be empty");
+            return;
+        }
         try {
-            if (!editedTaskName.trim()) {
-                toast.error("Task name cannot be empty");
-                return;
-            }
-            await updateTaskName(id, editedTaskName);
-            setEditingTaskId(null);
-            setEditedTaskName("");
+            await updateTaskName(id, newName);
+            socket.emit("task_updated");
             await fetchTasks();
             toast.success("Task updated");
         } catch {
@@ -93,15 +115,23 @@ const Home = () => {
         }
     };
 
+    const handleDeleteSharedTask = async (sharedTaskId) => {
+        try {
+            await deleteSharedTaskAsReceiver(sharedTaskId);
+            toast.success("Shared task removed");
+            fetchTasks();
+        } catch {
+            toast.error("Failed to remove shared task");
+        }
+    };
+
     return (
         <div>
-            {/* Navbar */}
-            <Navbar   />
+            <Navbar onSharedTaskAccepted={fetchSharedTasks} />
 
             <div className="container mt-5 w-50">
                 <h2 className="mb-4">Welcome, {user?.name || "User"}!</h2>
 
-                {/* Add Task */}
                 <div className="input-group mb-4">
                     <input
                         type="text"
@@ -115,7 +145,7 @@ const Home = () => {
                     </button>
                 </div>
 
-                {/* Task List */}
+                <h4 className="mb-3">My Tasks</h4>
                 {loading ? (
                     <div className="d-flex flex-column align-items-center mt-4">
                         <div className="spinner-border text-primary" role="status" />
@@ -127,91 +157,55 @@ const Home = () => {
                             <li className="list-group-item">No tasks found.</li>
                         ) : (
                             tasks.map((task) => (
-                                <li
+                                <TaskItem
                                     key={task._id}
-                                    className="list-group-item d-flex justify-content-between align-items-center"
-                                >
-                                    <div className="d-flex align-items-center w-100 gap-2">
-                                        {editingTaskId === task._id ? (
-                                            <input
-                                                type="text"
-                                                className="form-control form-control-sm"
-                                                value={editedTaskName}
-                                                onChange={(e) => setEditedTaskName(e.target.value)}
-                                            />
-                                        ) : (
-                                            <span className={`flex-grow-1 ${task.isCompleted ? "text-decoration-line-through" : ""}`}>
-                                                {task.name}
-                                            </span>
-                                        )}
-                                        {!task.isCompleted ? (
-                                            <button
-                                                className="btn btn-success btn-sm"
-                                                onClick={() => handleMarkComplete(task._id)}
-                                            >
-                                                Complete
-                                            </button>
-                                        ) : (
-                                            <button
-                                                className="btn btn-success btn-sm"
-                                                onClick={() => handleMarkNotComplete(task._id)}
-                                            >
-                                                Not Complete
-                                            </button>
-                                        )}
-
-                                        {editingTaskId === task._id ? (
-                                            <>
-                                                <button
-                                                    className="btn btn-primary btn-sm"
-                                                    onClick={() => handleUpdateTaskName(task._id)}
-                                                >
-                                                    Save
-                                                </button>
-                                                <button
-                                                    className="btn btn-secondary btn-sm"
-                                                    onClick={() => {
-                                                        setEditingTaskId(null);
-                                                        setEditedTaskName("");
-                                                    }}
-                                                >
-                                                    Cancel
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <button
-                                                className="btn btn-warning btn-sm"
-                                                onClick={() => {
-                                                    setEditingTaskId(task._id);
-                                                    setEditedTaskName(task.name);
-                                                }}
-                                            >
-                                                Edit
-                                            </button>
-                                        )}
-
-                                        <button
-                                            className="btn btn-danger btn-sm"
-                                            onClick={() => setTaskToDeleteId(task._id)}
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#confirmDeleteModal"
-                                        >
-                                            Delete
-                                        </button>
-
-                                    </div>
-                                </li>
+                                    task={task}
+                                    actualTaskId={task._id}
+                                    onMarkComplete={handleMarkComplete}
+                                    onMarkNotComplete={handleMarkNotComplete}
+                                    onUpdateName={handleUpdateTaskName}
+                                    onDelete={(id) => setTaskToDeleteId(id)}
+                                    onShare={(id) => setTaskToShareId(id)}
+                                />
                             ))
                         )}
                     </ul>
                 )}
+
+                <h4 className="mt-5">Shared Tasks</h4>
+                <ul className="list-group">
+                    {sharedTasks.length === 0 ? (
+                        <li className="list-group-item">No shared tasks.</li>
+                    ) : (
+                        sharedTasks.map((shared) => (
+                            <TaskItem
+                                key={shared._id}
+                                task={shared.taskId}
+                                actualTaskId={shared.taskId._id}
+                                isShared={true}
+                                onMarkComplete={handleMarkComplete}
+                                onMarkNotComplete={handleMarkNotComplete}
+                                onUpdateName={handleUpdateTaskName}
+                                onDelete={() => handleDeleteSharedTask(shared._id)}
+                            />
+                        ))
+                    )}
+                </ul>
             </div>
 
-            {/* DeleteModal*/}
+            <DeleteModal
+                fetchTasks={fetchTasks}
+                taskToDeleteId={taskToDeleteId}
+                setTaskToDeleteId={setTaskToDeleteId}
+            />
+            <SharedTaskModal
+                taskToShareId={taskToShareId}
+                setTaskToShareId={setTaskToShareId}
+                fetchTasks={fetchTasks}
+            />
 
-                <DeleteModal fetchTasks={fetchTasks} taskToDeleteId={taskToDeleteId} setTaskToDeleteId={setTaskToDeleteId} />
+            <ToastContainer position="top-right" autoClose={3000} />
         </div>
-
     );
 };
 

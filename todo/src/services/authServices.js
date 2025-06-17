@@ -24,7 +24,6 @@ export const signupUser = async (data) => {
 
 
 export const verifyEmail = async (token) => {
-  console.log(token)
   const res = await unauthorizedAxios.post(`/users/verify/${token}`);
   return res.data;
 };
@@ -41,4 +40,9 @@ export const resetPassword = async ({ token, newPassword }) => {
     newPassword,
   });
   return response.data;
+};
+
+export const getAllUsers = async () => {
+  const res = await authorizedAxios.get("/users/all");
+  return res.data;
 };
