@@ -2,7 +2,7 @@ import { deleteTask } from "../../services/taskServices";
 import "react-toastify/dist/ReactToastify.css";
 import { toast } from "react-toastify";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
-
+import socket from "../../utils/socket";
 
 
 export const DeleteModal = ({ taskToDeleteId, setTaskToDeleteId, fetchTasks }) => {
@@ -11,6 +11,7 @@ export const DeleteModal = ({ taskToDeleteId, setTaskToDeleteId, fetchTasks }) =
     const handleDeleteTask = async (id) => {
         try {
             await deleteTask(id);
+            socket.emit("task_deleted", { taskId: taskToDeleteId });
             await fetchTasks();
             toast.success("Task deleted");
         } catch {

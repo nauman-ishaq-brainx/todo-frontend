@@ -19,6 +19,12 @@ export const TaskItem = ({
         setEditing(false);
     };
 
+    const formatDate = (dateStr) => {
+        const date = new Date(dateStr);
+        return date.toLocaleString(); // Customize format as needed
+    };
+
+
     return (
         <li className="list-group-item d-flex justify-content-between align-items-center">
             <div className="d-flex align-items-center w-100 gap-2">
@@ -37,6 +43,11 @@ export const TaskItem = ({
                         {task.name || "Unnamed Task"}
                     </span>
                 )}
+                {task.dueDate && (
+                            <small className="text-muted">
+                                Due: {formatDate(task.dueDate)}
+                            </small>
+                        )}
 
                 {!task.isCompleted ? (
                     <button

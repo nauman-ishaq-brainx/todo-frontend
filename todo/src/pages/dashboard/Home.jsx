@@ -13,8 +13,9 @@ import {
 import { toast, ToastContainer } from "react-toastify";
 import { Navbar } from "./Navbar";
 import { DeleteModal } from "./DeleteModal";
-import { SharedTaskModal } from "./ShareTask";
+import { SharedTaskModal } from "./ShareTaskModal";
 import { TaskItem } from "./TaskItem";
+import { AddNewTask } from "./AddNewTask";
 import "bootstrap/dist/css/bootstrap.min.css";
 import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import "react-toastify/dist/ReactToastify.css";
@@ -28,6 +29,8 @@ const Home = () => {
     const [loading, setLoading] = useState(true);
     const [taskToShareId, setTaskToShareId] = useState(null);
     const [sharedTasks, setSharedTasks] = useState([]);
+    const [dueDate, setDueDate] = useState("");
+
 
     // Fetch all tasks (owned + shared)
     const fetchTasks = async () => {
@@ -59,18 +62,24 @@ const Home = () => {
         fetchTasks();
 
         socket.on("task_updated", fetchTasks);
-
+        socket.on("task_deleted", fetchSharedTasks);
         return () => {
             socket.off("task_updated", fetchTasks);
         };
     }, []);
 
 
+
+
     const handleAddTask = async () => {
         if (!newTask.trim()) return;
         try {
-            await addTask({ name: newTask });
+            await addTask({
+                name: newTask,
+                dueDate: dueDate ? new Date(dueDate).toISOString() : null,
+            });
             setNewTask("");
+            setDueDate("");
             await fetchTasks();
             toast.success("Task added!");
         } catch {
@@ -128,23 +137,13 @@ const Home = () => {
     return (
         <div>
             <Navbar onSharedTaskAccepted={fetchSharedTasks} />
+            {/* {newTask, setNewTask, dueDate, setDueDate, handleAdd} */}
+            <AddNewTask newTask={newTask} setNewTask={setNewTask} dueDate={dueDate} setDueDate={setDueDate} handleAdd={handleAddTask} />
 
             <div className="container mt-5 w-50">
                 <h2 className="mb-4">Welcome, {user?.name || "User"}!</h2>
 
-                <div className="input-group mb-4">
-                    <input
-                        type="text"
-                        value={newTask}
-                        onChange={(e) => setNewTask(e.target.value)}
-                        className="form-control"
-                        placeholder="Enter new task"
-                    />
-                    <button className="btn btn-primary" onClick={handleAddTask}>
-                        Add
-                    </button>
-                </div>
-
+               
                 <h4 className="mb-3">My Tasks</h4>
                 {loading ? (
                     <div className="d-flex flex-column align-items-center mt-4">

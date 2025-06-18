@@ -5,8 +5,8 @@ export const getAllTasks = async () => {
   return res.data;
 };
 
-export const addTask = async (name) => {
-  const res = await authorizedAxios.post("/tasks", name);
+export const addTask = async ({ name, dueDate }) => {
+  const res = await authorizedAxios.post("/tasks", { name, dueDate });
   return res.data;
 };
 

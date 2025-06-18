@@ -6,6 +6,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import ForgotPassword from "./pages/auth/ForgotPassword";
 import UpdatePassword from "./pages/auth/UpdatePassword";
 
+
 export const authRoutes = [
     {
         name:"Login",
