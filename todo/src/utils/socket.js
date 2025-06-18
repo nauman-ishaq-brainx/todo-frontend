@@ -1,5 +1,6 @@
 import { io } from "socket.io-client";
 
-const socket = io("http://localhost:8000"); // Or use REACT_APP_SOCKET_URL if set in .env
+const BASE_URL = process.env.REACT_APP_SOCKET_URL;
+const socket = io(BASE_URL); 
 
 export default socket;

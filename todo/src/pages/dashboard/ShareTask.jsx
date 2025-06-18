@@ -31,7 +31,7 @@ export const SharedTaskModal = ({ taskToShareId, setTaskToShareId, fetchTasks })
         try {
             await shareTask({ taskId: taskToShareId, email: selectedEmail });
             socket.emit("shared_task_invite");
-            toast.success("✅ Task shared successfully!");
+            toast.success("Task shared successfully!");
             setSelectedEmail("");
             setTaskToShareId(null);
             fetchTasks();

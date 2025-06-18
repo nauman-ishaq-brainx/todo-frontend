@@ -6,7 +6,6 @@ import ProtectedRoute from "./components/ProtectedRoute";
 
 
 const App = () => {
-
   const renderAuthRoutes = () =>{
     return authRoutes.map((route)=>{
       const newRoute = <Route path={`/auth/${route.path}`} element={route.protected ? <ProtectedRoute> {route.element} </ProtectedRoute> : route.element }/>
