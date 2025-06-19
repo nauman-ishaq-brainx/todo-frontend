@@ -29,7 +29,7 @@ const ResetPassword = () => {
 
     return (
         <div className="container d-flex justify-content-center align-items-center min-vh-100">
-            <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+            <ToastContainer position="top-right" autoClose={1500} hideProgressBar />
             <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
                 <h2 className="mb-3 text-center">Reset Password</h2>
 

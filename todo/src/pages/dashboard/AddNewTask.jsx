@@ -3,7 +3,7 @@
 export const AddNewTask = ({newTask, setNewTask, dueDate, setDueDate, handleAdd}) => {
 
     return (
-        <div className="container mt-5 w-50">
+
              <div className="mb-4">
                                 <div className="input-group mb-2">
                                     <input
@@ -29,6 +29,6 @@ export const AddNewTask = ({newTask, setNewTask, dueDate, setDueDate, handleAdd}
                             </div>
             
             
-        </div>
+
     );
 };

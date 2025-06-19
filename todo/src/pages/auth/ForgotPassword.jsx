@@ -14,7 +14,7 @@ const ForgotPassword = () => {
     try {
       await forgotPassword(email);
       toast.success("A reset link has been sent.");
-      setTimeout(() => navigate("/auth/login"), 2000);
+      setTimeout(() => navigate("/auth/login"), 1500);
     } catch (error) {
       const errMsg = error.response?.data?.error || "Something went wrong.";
       toast.error(errMsg);
@@ -23,7 +23,7 @@ const ForgotPassword = () => {
 
   return (
     <div className="container d-flex justify-content-center align-items-center min-vh-100">
-      <ToastContainer position="top-right" autoClose={3000} hideProgressBar />
+      <ToastContainer position="top-right" autoClose={1500} hideProgressBar />
       <div className="card p-4 shadow" style={{ maxWidth: "400px", width: "100%" }}>
         <h2 className="text-center mb-4">Forgot Password</h2>
 

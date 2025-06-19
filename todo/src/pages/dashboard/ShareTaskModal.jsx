@@ -4,7 +4,7 @@ import { shareTask } from "../../services/sharedTaskService";
 import { getAllUsers } from "../../services/authServices";
 import socket from "../../utils/socket";
 
-export const SharedTaskModal = ({ taskToShareId, setTaskToShareId, fetchTasks }) => {
+export const SharedTaskModal = ({ taskToShareId, setTaskToShareId, fetchTasks,currentPage }) => {
     const [users, setUsers] = useState([]);
     const [selectedEmail, setSelectedEmail] = useState("");
 
@@ -34,7 +34,7 @@ export const SharedTaskModal = ({ taskToShareId, setTaskToShareId, fetchTasks })
             toast.success("Task shared successfully!");
             setSelectedEmail("");
             setTaskToShareId(null);
-            fetchTasks();
+            fetchTasks(currentPage);
         } catch (err) {
             const message = err?.response?.data?.error || "❌ Failed to share task";
             toast.error(message);

@@ -5,14 +5,14 @@ import "bootstrap/dist/js/bootstrap.bundle.min.js";
 import socket from "../../utils/socket";
 
 
-export const DeleteModal = ({ taskToDeleteId, setTaskToDeleteId, fetchTasks }) => {
+export const DeleteModal = ({ taskToDeleteId, setTaskToDeleteId, fetchTasks, currentPage }) => {
 
 
     const handleDeleteTask = async (id) => {
         try {
             await deleteTask(id);
             socket.emit("task_deleted", { taskId: taskToDeleteId });
-            await fetchTasks();
+            await fetchTasks(currentPage);
             toast.success("Task deleted");
         } catch {
             toast.error("Failed to delete task");

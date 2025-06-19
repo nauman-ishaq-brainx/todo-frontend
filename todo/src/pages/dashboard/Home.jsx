@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import ReactPaginate from 'react-paginate';
 import {
     getAllTasks,
     addTask,
@@ -30,24 +31,31 @@ const Home = () => {
     const [taskToShareId, setTaskToShareId] = useState(null);
     const [sharedTasks, setSharedTasks] = useState([]);
     const [dueDate, setDueDate] = useState("");
+    const [currentPage, setCurrentPage] = useState(0);
+    const [totalPages, setTotalPages] = useState(0)
 
 
     // Fetch all tasks (owned + shared)
-    const fetchTasks = async () => {
+    const fetchTasks = async (currentPage) => {
         setLoading(true);
         try {
             const [taskRes, sharedTaskRes] = await Promise.all([
-                getAllTasks(),
+                getAllTasks(currentPage + 1),
                 getAcceptedSharedTasks(),
             ]);
             setTasks(taskRes.tasks || []);
             setSharedTasks(sharedTaskRes || []);
+            if (currentPage >= taskRes.totalPages & taskRes.totalPages > 0){
+                setCurrentPage(currentPage-1);
+            }
+            setTotalPages(taskRes.totalPages || 0);
         } catch {
             toast.error("Failed to fetch tasks");
         } finally {
             setLoading(false);
         }
     };
+
 
     const fetchSharedTasks = async () => {
         try {
@@ -58,15 +66,20 @@ const Home = () => {
         }
     };
 
-    useEffect(() => {
-        fetchTasks();
+        useEffect(() => {
+        fetchTasks(currentPage);
 
-        socket.on("task_updated", fetchTasks);
-        socket.on("task_deleted", fetchSharedTasks);
+        const handleTaskUpdate = () => fetchTasks(currentPage);
+        const handleTaskDelete = () => fetchSharedTasks();
+
+        socket.on("task_updated", handleTaskUpdate);
+        socket.on("task_deleted", handleTaskDelete);
+
         return () => {
-            socket.off("task_updated", fetchTasks);
+            socket.off("task_updated", handleTaskUpdate);
+            socket.off("task_deleted", handleTaskDelete);
         };
-    }, []);
+    }, [currentPage]);
 
 
 
@@ -80,7 +93,7 @@ const Home = () => {
             });
             setNewTask("");
             setDueDate("");
-            await fetchTasks();
+            await fetchTasks(currentPage);
             toast.success("Task added!");
         } catch {
             toast.error("Failed to add task");
@@ -91,7 +104,7 @@ const Home = () => {
         try {
             await markTaskComplete(id);
             socket.emit("task_updated");
-            await fetchTasks();
+            await fetchTasks(currentPage);
             toast.success("Task marked as completed");
         } catch {
             toast.error("Failed to mark as completed");
@@ -102,7 +115,7 @@ const Home = () => {
         try {
             await markTaskNotComplete(id);
             socket.emit("task_updated");
-            await fetchTasks();
+            await fetchTasks(currentPage);
             toast.success("Task marked as not completed");
         } catch {
             toast.error("Failed to mark as not completed");
@@ -117,7 +130,7 @@ const Home = () => {
         try {
             await updateTaskName(id, newName);
             socket.emit("task_updated");
-            await fetchTasks();
+            await fetchTasks(currentPage);
             toast.success("Task updated");
         } catch {
             toast.error("Failed to update task");
@@ -128,22 +141,26 @@ const Home = () => {
         try {
             await deleteSharedTaskAsReceiver(sharedTaskId);
             toast.success("Shared task removed");
-            fetchTasks();
+            fetchTasks(currentPage);
         } catch {
             toast.error("Failed to remove shared task");
         }
+    };
+    const handlePageClick = (event) => {
+        setCurrentPage(event.selected);
     };
 
     return (
         <div>
             <Navbar onSharedTaskAccepted={fetchSharedTasks} />
-            {/* {newTask, setNewTask, dueDate, setDueDate, handleAdd} */}
-            <AddNewTask newTask={newTask} setNewTask={setNewTask} dueDate={dueDate} setDueDate={setDueDate} handleAdd={handleAddTask} />
+            
 
             <div className="container mt-5 w-50">
                 <h2 className="mb-4">Welcome, {user?.name || "User"}!</h2>
+                <AddNewTask newTask={newTask} setNewTask={setNewTask} dueDate={dueDate} setDueDate={setDueDate} handleAdd={handleAddTask} />
+                
 
-               
+
                 <h4 className="mb-3">My Tasks</h4>
                 {loading ? (
                     <div className="d-flex flex-column align-items-center mt-4">
@@ -170,6 +187,30 @@ const Home = () => {
                         )}
                     </ul>
                 )}
+                <ReactPaginate
+                    breakLabel="..."
+                    nextLabel="Next →"
+                    onPageChange={handlePageClick}
+                    pageRangeDisplayed={3} 
+                    marginPagesDisplayed={1}  
+                    pageCount={totalPages}
+                    previousLabel="← Prev"
+                    renderOnZeroPageCount={null}
+                    forcePage={currentPage}
+
+                    containerClassName="pagination justify-content-center mt-3"
+                    pageClassName="page-item"
+                    pageLinkClassName="page-link"
+                    previousClassName="page-item"
+                    previousLinkClassName="page-link"
+                    nextClassName="page-item"
+                    nextLinkClassName="page-link"
+                    breakClassName="page-item"
+                    breakLinkClassName="page-link"
+                    activeClassName="active"
+                />
+
+
 
                 <h4 className="mt-5">Shared Tasks</h4>
                 <ul className="list-group">
@@ -178,14 +219,14 @@ const Home = () => {
                     ) : (
                         sharedTasks.map((shared) => (
                             <TaskItem
-                                key={shared._id}
-                                task={shared.taskId}
-                                actualTaskId={shared.taskId._id}
+                                key={shared?._id}
+                                task={shared?.taskId}
+                                actualTaskId={shared?.taskId._id}
                                 isShared={true}
                                 onMarkComplete={handleMarkComplete}
                                 onMarkNotComplete={handleMarkNotComplete}
                                 onUpdateName={handleUpdateTaskName}
-                                onDelete={() => handleDeleteSharedTask(shared._id)}
+                                onDelete={() => handleDeleteSharedTask(shared?._id)}
                             />
                         ))
                     )}
@@ -194,16 +235,18 @@ const Home = () => {
 
             <DeleteModal
                 fetchTasks={fetchTasks}
+                currentPage={currentPage}
                 taskToDeleteId={taskToDeleteId}
                 setTaskToDeleteId={setTaskToDeleteId}
             />
             <SharedTaskModal
                 taskToShareId={taskToShareId}
                 setTaskToShareId={setTaskToShareId}
+                currentPage={currentPage}
                 fetchTasks={fetchTasks}
             />
 
-            <ToastContainer position="top-right" autoClose={3000} />
+            <ToastContainer position="top-right" autoClose={1500} />
         </div>
     );
 };

@@ -27,7 +27,7 @@ export default function Signup() {
 
     const onSubmit = async (data) => {
         try {
-            signupUser(data);
+            await signupUser(data);
             toast.success(
                 <>
                     <p className="mb-1"> Account created successfully! Please verify your email.</p>
@@ -108,7 +108,7 @@ export default function Signup() {
                 </div>
             </div>
 
-            <ToastContainer position="top-right" autoClose={4000} />
+            <ToastContainer position="top-right" autoClose={1500} />
         </div>
     );
 }

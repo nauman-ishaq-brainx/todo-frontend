@@ -1,7 +1,7 @@
 import authorizedAxios from "../axios/authorized";
 
-export const getAllTasks = async () => {
-  const res = await authorizedAxios.get("/tasks");
+export const getAllTasks = async (page, limit=5) => {
+  const res = await authorizedAxios.get(`/tasks?page=${page}&limit=${limit}`);
   return res.data;
 };
 

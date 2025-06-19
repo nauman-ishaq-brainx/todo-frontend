@@ -36,7 +36,7 @@ export default function VerifyEmail() {
         <h2 className="mb-4">Verifying your email...</h2>
         <div className="spinner-border text-primary" role="status" />
       </div>
-      <ToastContainer position="bottom-right" autoClose={3000} />
+      <ToastContainer position="bottom-right" autoClose={1500} />
     </div>
   );
 }
